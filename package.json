@@ -1,6 +1,6 @@
 {
   "name": "loveboat-postreqs",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "support hapi route post-requisites",
   "main": "lib/index.js",
   "directories": {
