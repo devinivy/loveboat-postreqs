@@ -19,7 +19,8 @@ const internals = {};
 
 describe('loveboat-postreqs', () => {
 
-    it('', (done) => {
+
+    it('should register an array of postrequisites.', (done) => {
 
         const server = new Hapi.Server();
         server.connection();
@@ -30,7 +31,201 @@ describe('loveboat-postreqs', () => {
 
             server.routeTransforms(LoveboatPostreqs);
 
-            server.loveboat({});
+            server.loveboat({
+                method: 'get',
+                path: '/',
+                config: {
+                    handler: (request, reply) => reply('1'),
+                    post: [
+                        (request, reply) => {
+
+                            request.response.source += '2';
+                            return reply.continue();
+                        },
+                        (request, reply) => {
+
+                            request.response.source += '3';
+                            return reply.continue();
+                        }
+                    ]
+                }
+            });
+
+            server.inject('/', (res) => {
+
+                expect(res.result).to.equal('123');
+                done();
+            });
+        });
+
+    });
+
+    it('should register a single postrequisite.', (done) => {
+
+        const server = new Hapi.Server();
+        server.connection();
+
+        server.register(Loveboat, (err) => {
+
+            expect(err).to.not.exist();
+
+            server.routeTransforms(LoveboatPostreqs);
+
+            server.loveboat({
+                method: 'get',
+                path: '/',
+                config: {
+                    handler: (request, reply) => reply('1'),
+                    post: (request, reply) => {
+
+                        request.response.source += '2';
+                        return reply.continue();
+                    }
+                }
+            });
+
+            server.inject('/', (res) => {
+
+                expect(res.result).to.equal('12');
+                done();
+            });
+        });
+
+    });
+
+    it('should register a postrequisite as an object.', (done) => {
+
+        const server = new Hapi.Server();
+        server.connection();
+
+        server.register(Loveboat, (err) => {
+
+            expect(err).to.not.exist();
+
+            server.routeTransforms(LoveboatPostreqs);
+
+            server.loveboat({
+                method: 'get',
+                path: '/',
+                config: {
+                    handler: (request, reply) => reply('1'),
+                    post: {
+                        method: (request, reply) => {
+
+                            request.response.source += '2';
+                            return reply.continue();
+                        }
+                    }
+                }
+            });
+
+            server.inject('/', (res) => {
+
+                expect(res.result).to.equal('12');
+                done();
+            });
+        });
+
+    });
+
+    it('should register a postrequisite before route-configured onPostHandlers.', (done) => {
+
+        const server = new Hapi.Server();
+        server.connection();
+
+        server.register(Loveboat, (err) => {
+
+            expect(err).to.not.exist();
+
+            server.routeTransforms(LoveboatPostreqs);
+
+            server.loveboat({
+                method: 'get',
+                path: '/',
+                config: {
+                    handler: (request, reply) => reply('1'),
+                    post: (request, reply) => {
+
+                        request.response.source += '2';
+                        return reply.continue();
+                    },
+                    ext: {
+                        onPostHandler: {
+                            method: (request, reply) => {
+
+                                request.response.source += '3';
+                                return reply.continue();
+                            }
+                        }
+                    }
+                }
+            });
+
+            server.inject('/', (res) => {
+
+                expect(res.result).to.equal('123');
+                done();
+            });
+        });
+
+    });
+
+    it('should move config.post to config.plugins.loveboat.postreqs.', (done) => {
+
+        const server = new Hapi.Server();
+        server.connection();
+
+        server.register(Loveboat, (err) => {
+
+            expect(err).to.not.exist();
+
+            server.routeTransforms(LoveboatPostreqs);
+
+            const postreq = (request, reply) => {
+
+                request.response.source += '2';
+                return reply.continue();
+            };
+
+            server.loveboat({
+                method: 'get',
+                path: '/',
+                config: {
+                    handler: (request, reply) => reply('1'),
+                    post: postreq
+                }
+            });
+
+            const route = server.match('get', '/');
+            expect(route.settings.plugins.loveboat.postreqs).to.equal(postreq);
+
+            done();
+        });
+
+    });
+
+    it('ignore routes with bad config.post.', (done) => {
+
+        const server = new Hapi.Server();
+        server.connection();
+
+        server.register(Loveboat, (err) => {
+
+            expect(err).to.not.exist();
+
+            server.routeTransforms(LoveboatPostreqs);
+
+            expect(() => {
+
+                server.loveboat({
+                    method: 'get',
+                    path: '/',
+                    config: {
+                        handler: (request, reply) => reply('1'),
+                        post: ['bad']
+                    }
+                });
+            }).to.throw(/^Invalid routeConfig options/);
 
             done();
         });
