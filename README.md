@@ -84,3 +84,5 @@ server.register(Loveboat, (err) => {
      - `reply` - the [reply interface](https://github.com/hapijs/hapi/blob/master/API.md#reply-interface), with identical usage as in a [request extension](https://github.com/hapijs/hapi/blob/master/API.md#serverextevents).  To continue normal execution of the request lifecycle, `reply.continue()` must be called.
    - an object with,
      - `method` - a function with the signature described above.
+
+   Each item is a post-requisite.  Post-requisites run after the route's handler, serially and in the order specified.
