@@ -9,9 +9,27 @@ support hapi route post-requisites
 
 This loveboat transform allows you to add route post-requisites in your hapi route configuration, whereas hapi on its own only supports pre-requisites.
 
+Post-requisites run right after the handler, so they are especially useful for cleanup and for modifying the response.
+
+In the example below, a post-requisite is used to upper-case the response.
 ```js
 // Ever wish this worked?
-server.loveboat({});
+server.loveboat({
+    method: 'get',
+    path: '/',
+    config: {
+        handler: function (request, reply) {
+            return reply('loveboat');
+        },
+        post: [ // Now it does!
+            function (request, reply) {
+                // Upper-case the response and carry on
+                request.response.source = request.response.source.toUpperCase();
+                return reply.continue();
+            }
+        ]
+    }
+});
 ```
 
 To use this transform,
@@ -38,7 +56,31 @@ server.register(Loveboat, (err) => {
     ]);
 
     // 3. Configure your routes!
-    server.loveboat({});
+    server.loveboat({
+        method: 'get',
+        path: '/',
+        config: {
+            handler: function (request, reply) {
+                return reply('loveboat');
+            },
+            post: [ // This works!
+                function (request, reply) {
+                    // Upper-case the response and carry on
+                    request.response.source = request.response.source.toUpperCase();
+                    return reply.continue();
+                }
+            ]
+        }
+    });
 
 });
 ```
+
+## API
+### Route Definition
+ - `config.post` - an item or array of items of the format,
+   - a function with signature `function(request, reply)`,
+     - `request` - the [request object](https://github.com/hapijs/hapi/blob/master/API.md#request-object).
+     - `reply` - the [reply interface](https://github.com/hapijs/hapi/blob/master/API.md#reply-interface), with identical usage as in a [request extension](https://github.com/hapijs/hapi/blob/master/API.md#serverextevents).  To continue normal execution of the request lifecycle, `reply.continue()` must be called.
+   - an object with,
+     - `method` - a function with the signature described above.
