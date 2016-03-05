@@ -225,7 +225,7 @@ describe('loveboat-postreqs', () => {
                         post: ['bad']
                     }
                 });
-            }).to.throw(/);
+            }).to.throw(/^Invalid routeConfig options/);
 
             done();
         });
