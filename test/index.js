@@ -128,16 +128,44 @@ describe('loveboat-postreqs', () => {
 
     });
 
-    it('should register a postrequisite before route-configured onPostHandlers.', (done) => {
+    it('should register a postrequisite before route-configured onPostHandlers and onPostHandlers in other plugins.', (done) => {
 
         const server = new Hapi.Server();
         server.connection();
 
-        server.register(Loveboat, (err) => {
+        const plugin = function (srv, options, next) {
+
+            // Just making sure that registration within a plugin
+            // doesn't fail due to circular before-onPostHandler deps
+            srv.loveboat({
+                method: 'get',
+                path: '/ensure-no-conflict',
+                config: {
+                    handler: (request, reply) => reply(null),
+                    post: (request, reply) => reply.continue()
+                }
+            });
+
+            srv.ext('onPostHandler', (request, reply) => {
+
+                request.response.source += '3';
+                return reply.continue();
+            });
+
+            next();
+        };
+
+        plugin.attributes = { name: 'plugin' };
+
+        server.register([
+            {
+                register: Loveboat,
+                options: { transforms: LoveboatPostreqs }
+            },
+            plugin
+        ], (err) => {
 
             expect(err).to.not.exist();
-
-            server.routeTransforms(LoveboatPostreqs);
 
             server.loveboat({
                 method: 'get',
@@ -153,7 +181,7 @@ describe('loveboat-postreqs', () => {
                         onPostHandler: {
                             method: (request, reply) => {
 
-                                request.response.source += '3';
+                                request.response.source += '4';
                                 return reply.continue();
                             }
                         }
@@ -163,7 +191,7 @@ describe('loveboat-postreqs', () => {
 
             server.inject('/', (res) => {
 
-                expect(res.result).to.equal('123');
+                expect(res.result).to.equal('1234');
                 done();
             });
         });
