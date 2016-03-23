@@ -77,7 +77,7 @@ server.register(Loveboat, (err) => {
 ```
 
 ### Limitations
-The post-requisites are implemented as route-level `onPostHandler` request extensions.  In order to place them as near to the handler as possible, they are specified to run before the request extensions of all plugins that have already been registered and before all other route-level request extensions.  This leaves two blind spots– request `onPostHandler` extensions that are created,
+The post-requisites are implemented as route-level `onPostHandler` request extensions.  In order to place them as near to the handler as possible, they are specified to run before the request extensions of all plugins that have already been registered and before all other route-level request extensions (unless the `tight` option is `false`).  This leaves two blind spots– request `onPostHandler` extensions that are created,
 
  1. in the same plugin that your route is registered and also before your route is registered.
  2. in a to-be-registered plugin and also opt to come `before` the extensions of the plugin in which your route is registered.
@@ -85,6 +85,10 @@ The post-requisites are implemented as route-level `onPostHandler` request exten
 Basically, the post-requisites are run as near to the handler as possible using request extensions.
 
 ## API
+### Options
+The following options may be specified when the transform is registered,
+ - `tight` - when `false`, the post-requisites wont be forced to run before `onPostHandler` extensions specified in other plugins.  Defaults to `true`.
+
 ### Route Definition
  - `config.post` - an item or array of items of the format,
    - a function with signature `function(request, reply)`,

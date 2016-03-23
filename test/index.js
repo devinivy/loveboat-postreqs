@@ -19,7 +19,6 @@ const internals = {};
 
 describe('loveboat-postreqs', () => {
 
-
     it('should register an array of postrequisites.', (done) => {
 
         const server = new Hapi.Server();
@@ -128,7 +127,7 @@ describe('loveboat-postreqs', () => {
 
     });
 
-    it('should register a postrequisite before route-configured onPostHandlers and onPostHandlers in other plugins.', (done) => {
+    it('should register a postrequisite before route-configured onPostHandlers and onPostHandlers in other plugins by default.', (done) => {
 
         const server = new Hapi.Server();
         server.connection();
@@ -198,36 +197,77 @@ describe('loveboat-postreqs', () => {
 
     });
 
-    it('should move config.post to config.plugins.loveboat.postreqs.', (done) => {
+    it('should not register a postrequisite before onPostHandlers in other plugins when tight option is false.', (done) => {
 
         const server = new Hapi.Server();
         server.connection();
 
-        server.register(Loveboat, (err) => {
+        const plugin = function (srv, options, next) {
 
-            expect(err).to.not.exist();
+            // Just making sure that registration within a plugin
+            // doesn't fail due to circular before-onPostHandler deps
+            srv.loveboat({
+                method: 'get',
+                path: '/ensure-no-conflict',
+                config: {
+                    handler: (request, reply) => reply(null),
+                    post: (request, reply) => reply.continue()
+                }
+            });
 
-            server.routeTransforms(LoveboatPostreqs);
-
-            const postreq = (request, reply) => {
+            srv.ext('onPostHandler', (request, reply) => {
 
                 request.response.source += '2';
                 return reply.continue();
-            };
+            });
+
+            next();
+        };
+
+        plugin.attributes = { name: 'plugin' };
+
+        server.register([
+            {
+                register: Loveboat,
+                options: {
+                    transforms: {
+                        transform: LoveboatPostreqs,
+                        options: { tight: false }
+                    }
+                }
+            },
+            plugin
+        ], (err) => {
+
+            expect(err).to.not.exist();
 
             server.loveboat({
                 method: 'get',
                 path: '/',
                 config: {
                     handler: (request, reply) => reply('1'),
-                    post: postreq
+                    post: (request, reply) => {
+
+                        request.response.source += '3';
+                        return reply.continue();
+                    },
+                    ext: {
+                        onPostHandler: {
+                            method: (request, reply) => {
+
+                                request.response.source += '4';
+                                return reply.continue();
+                            }
+                        }
+                    }
                 }
             });
 
-            const route = server.match('get', '/');
-            expect(route.settings.plugins.loveboat.postreqs).to.equal(postreq);
+            server.inject('/', (res) => {
 
-            done();
+                expect(res.result).to.equal('1234');
+                done();
+            });
         });
 
     });
