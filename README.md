@@ -5,6 +5,8 @@ support hapi route post-requisites
 
 [![Build Status](https://travis-ci.org/devinivy/loveboat-postreqs.svg?branch=master)](https://travis-ci.org/devinivy/loveboat-postreqs) [![Coverage Status](https://coveralls.io/repos/devinivy/loveboat-postreqs/badge.svg?branch=master&service=github)](https://coveralls.io/github/devinivy/loveboat-postreqs?branch=master)
 
+Lead Maintainer - [Devin Ivy](https://github.com/devinivy)
+
 ## Usage
 
 This loveboat transform allows you to add route post-requisites in your hapi route configuration, whereas hapi on its own only supports pre-requisites.
@@ -92,8 +94,8 @@ The following options may be specified when the transform is registered,
 ### Route Definition
  - `config.post` - an item or array of items of the format,
    - a function with signature `function(request, reply)`,
-     - `request` - the [request object](https://github.com/hapijs/hapi/blob/master/API.md#request-object).
-     - `reply` - the [reply interface](https://github.com/hapijs/hapi/blob/master/API.md#reply-interface), with identical usage as in a [request extension](https://github.com/hapijs/hapi/blob/master/API.md#serverextevents).  To continue normal execution of the request lifecycle, `reply.continue()` must be called.
+     - `request` - the [request object](https://github.com/hapijs/hapi/blob/v16/API.md#request-object).
+     - `reply` - the [reply interface](https://github.com/hapijs/hapi/blob/v16/API.md#reply-interface), with identical usage as in a [request extension](https://github.com/hapijs/hapi/blob/v16/API.md#serverextevents).  To continue normal execution of the request lifecycle, `reply.continue()` must be called.
    - an object with,
      - `method` - a function with the signature described above.
 
